@@ -1,0 +1,110 @@
+options {
+    STATIC = false;
+    OUTPUT_DIRECTORY = "src/ccs/parser";
+    IGNORE_CASE = true;
+}
+PARSER_BEGIN(Parser)
+package ccs.parser;
+import ccs.compiler.Variable;
+import ccs.compiler.VariableTable;
+import ccs.expression.Expression;
+import ccs.expression.LiteralExpression;
+import ccs.compiler.Type;
+import ccs.compiler.TypedExpression;
+import ccs.compiler.Strings;
+
+public class Parser {
+    private VariableTable vars = new VariableTable();
+
+    public int getVarCount() {
+        return vars.getSize();
+    }
+
+    public void parse() throws ParseException {
+        input();
+    }
+}
+PARSER_END(Parser)
+
+SKIP :
+{
+< " " | "\t" | "\r" | "\n" | "\r\n" >
+| <"//" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
+| <"/*"(~["/"])*  "*""/" >
+}
+TOKEN : { < VAR: "VAR" > }
+TOKEN : { < AS: "AS" >}
+TOKEN : { < START: "START" > | < STOP: "STOP" > | < OUTPUT: "OUTPUT" > } 
+TOKEN : /* KEYWORDS */
+{
+    <INT: "INT">|<BOOL:"BOOL">|<FLOAT:"FLOAT">|<CHAR:"CHAR">
+    |<AND: "AND"> | <OR: "OR"> | <NOT: "NOT">
+}
+
+TOKEN :
+{
+  < EQUALS: "=" > | < COLON: ":" > | <LPAR: "(">|<RPAR: ")">
+}
+TOKEN:
+{
+  < PLUS : "+" >|< MINUS :"-" >|< MUL: "*" >|< DIV: "/" >|< MOD: "%" >|< COMM: ",">
+  |<LT: "<">|<GT: ">">|<LE: "<=">|<GE: ">=">|<EQ: "==">|<NE: "<>">
+  |<CAT: "&">
+}
+TOKEN:
+{
+    < VARIABLE: <LETTER>(<LETTER>|<DIGIT>)* >
+    | < #LETTER: ["a"-"z", "A"-"Z", "_"] >
+    | < #DIGIT: ["0"-"9"] >
+}
+TOKEN:
+{
+    < INT_VALUE: (<DIGIT>)+ >
+    | < FLOAT_VALUE: <INT_VALUE> "." (<DIGIT>)* | "." (<DIGIT>)+ >
+    | < CHAR_VALUE: "\'" (~["\'","\\"]|<ESCAPE>) "\'" >
+    | < STRING_VALUE: "\"" (~["\"","\\"]|<ESCAPE>)* "\"" >
+    | < #ESCAPE: "[" ~[] "]" >
+}
+
+void input(): {} { (declaration())*  body() }
+void varDeclaration(): {} { <VARIABLE> (<EQUALS> literalValue())?  }
+TypedExpression literalValue(): {
+    TypedExpression result;
+}
+{
+    (<INT_VALUE> { result = new TypedExpression(Type.INT,
+            new LiteralExpression(Integer.valueOf(token.image)));}
+    | <FLOAT_VALUE> { result = new TypedExpression(Type.FLOAT,
+            new LiteralExpression(Double.valueOf(token.image)));}
+    | <CHAR_VALUE> { result = new TypedExpression(Type.CHAR,
+            new LiteralExpression(Strings.unescapeChar(token.image)));}
+    | <STRING_VALUE> { result = new TypedExpression(Type.STRING,
+            new LiteralExpression(Strings.unescape(token.image)));})
+    { return result; }
+}
+void declaration(): {} { <VAR> varDeclaration() (<COMM> varDeclaration())* <AS> type()}
+void type(): {} {<INT>|<FLOAT>|<BOOL>|<CHAR>}
+void body(): {} { <START> (statement())* <STOP> }
+void statement(): {} { assignment() | output() }
+void assignment(): {} { <VARIABLE> <EQUALS> expression() }
+void output(): {} { <OUTPUT> <COLON> expression() }
+void expression(): {} { comparison() (logicalOp() comparison())* }
+void logicalOp(): {} { <AND> | <OR> }
+void comparison(): {Token op; TypedExpression e, o;} { (e=simpleExpression()
+    ( op=comparisonOp() o=simpleExpression()) )?
+}
+Token comparisonOp(): {Token t;} {
+    ( t=<LT> | t=<GT> | t=<LE> | t=<GE> | t=<EQ> | t=<NE> )
+    {return t;}
+}
+void simpleExpression(): {} { term() ( addOp() term() )* }
+void addOp(): {} { <PLUS> | <MINUS> | <CAT> }
+void term(): {} { factor() ( mulOp() factor() )* }
+void mulOp(): {} { <MUL> | <DIV> | <MOD> }
+void factor(): {TypedExpression e; boolean neg=false;} {
+    (<PLUS>|<MINUS> {neg=true;}) e=factor() {}
+    | <LPAR> expression() <RPAR>
+    | <NOT> expression()
+    | <VARIABLE>
+    | literalValue()
+}
