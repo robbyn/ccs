@@ -4,7 +4,7 @@ options {
 }
 PARSER_BEGIN(Parser)
 package ccs.parser;
-import ccs.compiler.Variable;
+import ccs.compiler.VariableDeclaration;
 import ccs.compiler.Type;
 import ccs.compiler.Strings;
 
@@ -56,7 +56,18 @@ TOKEN:
 }
 
 void input(): {} { (declaration())*  body() }
-void varDeclaration(): {} { <VARIABLE> (<EQUALS> literalValue())?  }
+void declaration(): {}
+{
+    <VAR> varDeclaration(null) (<COMM> varDeclaration(null))* <AS> type()
+}
+VariableDeclaration varDeclaration(VariableDeclaration next):
+    { Token n; Type t = null; }
+{
+    ( n=<VARIABLE> (<EQUALS> t=literalValue())? )
+    { return t==null
+            ? new VariableDeclaration(n.image,next)
+            : new VariableDeclaration(n.image,null,t,next); }
+}
 Type literalValue(): { Type result; }
 {
     (
@@ -66,10 +77,6 @@ Type literalValue(): { Type result; }
         | <STRING_VALUE> { result = Type.STRING; }
     )
     { return result; }
-}
-void declaration(): {}
-{
-    <VAR> varDeclaration() (<COMM> varDeclaration())* <AS> type()
 }
 Type type(): {Type result;} {
     (
