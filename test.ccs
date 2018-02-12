@@ -2,5 +2,6 @@ VAR a=100, b=200, c=300 AS INT
 VAR d="true" AS BOOL 
 START
     OUTPUT: "Hello world!!!"
-    OUTPUT: b
+    OUTPUT: d
+    OUTPUT: c
 STOP 
