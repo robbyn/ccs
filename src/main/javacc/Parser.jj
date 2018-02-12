@@ -6,7 +6,6 @@ PARSER_BEGIN(Parser)
 package ccs.parser;
 import ccs.compiler.Compiler;
 import org.tastefuljava.classfile.CodeSegment;
-import ccs.compiler.VariableDeclaration;
 import ccs.compiler.Type;
 import ccs.compiler.Strings;
 
@@ -58,15 +57,22 @@ TOKEN:
 }
 
 void input(): {} { (declaration())*  body() }
-void declaration(): {}
+void declaration(): {Type t;}
 {
-    <VAR> varDeclaration(null) (<COMM> varDeclaration(null))* <AS> type()
+    (<VAR> varDeclaration() (<COMM> varDeclaration())* <AS> t=type())
+    { declareAllVars(t); }
 }
-VariableDeclaration varDeclaration(VariableDeclaration next):
+void varDeclaration():
     { Token n; CodeSegment seg = null; Type t = null; }
 {
     ( n=<VARIABLE> (<EQUALS> { openSegment(); } t=literalValue() { seg = closeSegment(); })? )
-    { return new VariableDeclaration(n.image,null,t,next); }
+    {
+        if (seg == null) {
+            addVar(n.image, n.beginLine, n.beginColumn);
+        } else {
+            addVar(n.image, n.beginLine, n.beginColumn, seg, t);
+        }
+    }
 }
 Type literalValue(): { Type result; }
 {
