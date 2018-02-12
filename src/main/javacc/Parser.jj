@@ -5,11 +5,7 @@ options {
 PARSER_BEGIN(Parser)
 package ccs.parser;
 import ccs.compiler.Variable;
-import ccs.compiler.VariableTable;
-import ccs.expression.Expression;
-import ccs.expression.LiteralExpression;
 import ccs.compiler.Type;
-import ccs.compiler.TypedExpression;
 import ccs.compiler.Strings;
 
 public class Parser {
@@ -61,30 +57,40 @@ TOKEN:
 
 void input(): {} { (declaration())*  body() }
 void varDeclaration(): {} { <VARIABLE> (<EQUALS> literalValue())?  }
-Type literalValue(): {
-    Type result;
-}
+Type literalValue(): { Type result; }
 {
-    (<INT_VALUE> { result = new TypedExpression(Type.INT,
-            new LiteralExpression(Integer.valueOf(token.image)));}
-    | <FLOAT_VALUE> { result = new TypedExpression(Type.FLOAT,
-            new LiteralExpression(Double.valueOf(token.image)));}
-    | <CHAR_VALUE> { result = new TypedExpression(Type.CHAR,
-            new LiteralExpression(Strings.unescapeChar(token.image)));}
-    | <STRING_VALUE> { result = new TypedExpression(Type.STRING,
-            new LiteralExpression(Strings.unescape(token.image)));})
+    (
+        <INT_VALUE> { result = Type.INT; }
+        | <FLOAT_VALUE> { result = Type.FLOAT; }
+        | <CHAR_VALUE> { result = Type.CHAR; }
+        | <STRING_VALUE> { result = Type.STRING; }
+    )
     { return result; }
 }
-void declaration(): {} { <VAR> varDeclaration() (<COMM> varDeclaration())* <AS> type()}
-void type(): {} {<INT>|<FLOAT>|<BOOL>|<CHAR>}
+void declaration(): {}
+{
+    <VAR> varDeclaration() (<COMM> varDeclaration())* <AS> type()
+}
+Type type(): {Type result;} {
+    (
+        <INT> { result = Type.INT; }
+        | <FLOAT> { result = Type.FLOAT; }
+        | <BOOL> { result = Type.BOOL; }
+        | <CHAR> { result = Type.CHAR; }
+    )
+    { return result; }
+}
 void body(): {} { <START> (statement())* <STOP> }
 void statement(): {} { assignment() | output() }
 void assignment(): {} { <VARIABLE> <EQUALS> expression() }
 void output(): {} { <OUTPUT> <COLON> expression() }
 void expression(): {} { comparison() (logicalOp() comparison())* }
 void logicalOp(): {} { <AND> | <OR> }
-void comparison(): {Token op; TypedExpression e, o;} { (e=simpleExpression()
-    ( op=comparisonOp() o=simpleExpression()) )?
+void comparison(): {Token op; } {
+    (
+        simpleExpression()
+        ( op=comparisonOp() simpleExpression() )?
+    )
 }
 Token comparisonOp(): {Token t;} {
     ( t=<LT> | t=<GT> | t=<LE> | t=<GE> | t=<EQ> | t=<NE> )
@@ -92,12 +98,14 @@ Token comparisonOp(): {Token t;} {
 }
 void simpleExpression(): {} { term() ( addOp() term() )* }
 void addOp(): {} { <PLUS> | <MINUS> | <CAT> }
-void term(): {} { factor() ( mulOp() factor() )* }
+void term(): {} { factor(false) ( mulOp() factor(false) )* }
 void mulOp(): {} { <MUL> | <DIV> | <MOD> }
-void factor(): {TypedExpression e; boolean neg=false;} {
-    (<PLUS>|<MINUS> {neg=true;}) e=factor() {}
-    | <LPAR> expression() <RPAR>
-    | <NOT> expression()
-    | <VARIABLE>
-    | literalValue()
+void factor(boolean neg): {} {
+    (
+        (<PLUS>|<MINUS> {neg=!neg;}) factor(neg) {}
+        | <LPAR> expression() <RPAR>
+        | <NOT> expression()
+        | <VARIABLE>
+        | literalValue()
+    )
 }
