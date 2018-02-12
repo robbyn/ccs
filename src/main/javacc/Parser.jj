@@ -13,12 +13,6 @@ import ccs.compiler.TypedExpression;
 import ccs.compiler.Strings;
 
 public class Parser {
-    private VariableTable vars = new VariableTable();
-
-    public int getVarCount() {
-        return vars.getSize();
-    }
-
     public void parse() throws ParseException {
         input();
     }
@@ -67,8 +61,8 @@ TOKEN:
 
 void input(): {} { (declaration())*  body() }
 void varDeclaration(): {} { <VARIABLE> (<EQUALS> literalValue())?  }
-TypedExpression literalValue(): {
-    TypedExpression result;
+Type literalValue(): {
+    Type result;
 }
 {
     (<INT_VALUE> { result = new TypedExpression(Type.INT,
