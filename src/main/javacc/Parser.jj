@@ -26,7 +26,7 @@ TOKEN : { < AS: "AS" >}
 TOKEN : { < START: "START" > | < STOP: "STOP" > | < OUTPUT: "OUTPUT" > } 
 TOKEN : /* KEYWORDS */
 {
-    <INT: "INT">|<BOOL:"BOOL">|<FLOAT:"FLOAT">|<CHAR:"CHAR">
+    <INT: "INT"> | <BOOL:"BOOL"> | <FLOAT:"FLOAT"> | <CHAR:"CHAR">
     |<AND: "AND"> | <OR: "OR"> | <NOT: "NOT">
 }
 
