@@ -1,6 +1,5 @@
 package ccs.compiler;
 
-import ccs.Main;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -260,5 +259,13 @@ public class Compiler {
                 LOG.severe("Cannot negate a string");
                 break;
         }
+    }
+
+    public void output(Type type) {
+        convert(type, Type.STRING);
+        code.getStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
+        code.swap();
+        code.invokeVirtual(
+                "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
     }
 }

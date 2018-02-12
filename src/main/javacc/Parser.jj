@@ -96,7 +96,7 @@ Type type(): {Type result;} {
 void body(): {} { <START> (statement())* <STOP> }
 void statement(): {} { assignment() | output() }
 void assignment(): {} { <VARIABLE> <EQUALS> expression() }
-void output(): {} { <OUTPUT> <COLON> expression() }
+void output(): { Type t; } { <OUTPUT> <COLON> t=expression() {output(t);} }
 Type expression(): {Type t; } {
     ( t = comparison() (logicalOp() comparison())* )
     { return t; }
