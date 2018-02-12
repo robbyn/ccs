@@ -1,7 +1,6 @@
 options {
     STATIC = false;
-    OUTPUT_DIRECTORY = "src/ccs/parser";
-    IGNORE_CASE = true;
+    IGNORE_CASE = false;
 }
 PARSER_BEGIN(Parser)
 package ccs.parser;
