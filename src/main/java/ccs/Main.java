@@ -7,14 +7,26 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import ccs.parser.ParseException;
 import ccs.parser.Parser;
+import java.io.File;
 
 public class Main {
     public static void main(String[] args) {
-        try (InputStream in = new FileInputStream(args[0])) {
+        File file = new File(args[0]);
+        try (InputStream in = new FileInputStream(file)) {
             Parser parser = new Parser(in);
             parser.parse();
+            parser.writeTo(changeExtension(file, ".ccs", ".class"));
         } catch (IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    private static File changeExtension(File file, String from, String to) {
+        File dir = file.getParentFile();
+        String name = file.getName();
+        if (name.endsWith(from)) {
+            name = name.substring(0, name.length()-from.length());
+        }
+        return new File(dir, name + to);
     }
 }

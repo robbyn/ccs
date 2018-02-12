@@ -1,0 +1,4 @@
+VAR a=100, b=200, c=300 AS INT 
+VAR d="TRUE" AS BOOL 
+START
+STOP 

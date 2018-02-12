@@ -74,13 +74,13 @@ void varDeclaration():
         }
     }
 }
-Type literalValue(): { Type result; }
+Type literalValue(): { Token t; Type result; }
 {
     (
-        <INT_VALUE> { result = Type.INT; }
-        | <FLOAT_VALUE> { result = Type.FLOAT; }
-        | <CHAR_VALUE> { result = Type.CHAR; }
-        | <STRING_VALUE> { result = Type.STRING; }
+        t=<INT_VALUE> { literalInt(t.image); result = Type.INT; }
+        | t=<FLOAT_VALUE> { literalInt(t.image); result = Type.FLOAT; }
+        | t=<CHAR_VALUE> { literalChar(t.image); result = Type.CHAR; }
+        | t=<STRING_VALUE> { literalString(t.image); result = Type.STRING; }
     )
     { return result; }
 }
@@ -97,28 +97,40 @@ void body(): {} { <START> (statement())* <STOP> }
 void statement(): {} { assignment() | output() }
 void assignment(): {} { <VARIABLE> <EQUALS> expression() }
 void output(): {} { <OUTPUT> <COLON> expression() }
-void expression(): {} { comparison() (logicalOp() comparison())* }
+Type expression(): {Type t; } {
+    ( t = comparison() (logicalOp() comparison())* )
+    { return t; }
+}
 void logicalOp(): {} { <AND> | <OR> }
-void comparison(): {Token op; } {
+Type comparison(): {Token op; Type t;} {
     (
-        simpleExpression()
+        t=simpleExpression()
         ( op=comparisonOp() simpleExpression() )?
     )
+    { return t; }
 }
 Token comparisonOp(): {Token t;} {
     ( t=<LT> | t=<GT> | t=<LE> | t=<GE> | t=<EQ> | t=<NE> )
     {return t;}
 }
-void simpleExpression(): {} { term() ( addOp() term() )* }
+Type simpleExpression(): {Type t;} {
+    ( t=term() ( addOp() term() )* )
+    { return t; }
+}
+
 void addOp(): {} { <PLUS> | <MINUS> | <CAT> }
-void term(): {} { factor(false) ( mulOp() factor(false) )* }
+Type term(): { Type t; } {
+    ( t=factor() ( mulOp() factor() )* )
+    { return t; }
+}
 void mulOp(): {} { <MUL> | <DIV> | <MOD> }
-void factor(boolean neg): {} {
+Type factor(): {boolean neg = false; Type t; Token n; } {
     (
-        (<PLUS>|<MINUS> {neg=!neg;}) factor(neg) {}
-        | <LPAR> expression() <RPAR>
-        | <NOT> expression()
-        | <VARIABLE>
-        | literalValue()
+        (<PLUS>|<MINUS> {neg=!neg;}) t=factor() { if (neg) neg(t); }
+        | <LPAR> t=expression() <RPAR>
+        | <NOT> t=expression()
+        | n=<VARIABLE> { t = loadVar(n.image); }
+        | t=literalValue()
     )
+    { return t; }
 }
