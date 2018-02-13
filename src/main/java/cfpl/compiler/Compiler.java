@@ -1,5 +1,6 @@
 package cfpl.compiler;
 
+import cfpl.compiler.Invoker.Call;
 import cfpl.compiler.Invoker.Function;
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,7 @@ public class Compiler {
     private final Deque<CodeSegment> segStack = new LinkedList<>();
     private final List<VariableDeclaration> varList = new ArrayList<>();
     private final Map<String,Variable> varMap = new HashMap<>();
+    private Call call;
 
     public void openSegment() {
         segStack.addFirst(code);
@@ -55,12 +57,12 @@ public class Compiler {
 
     private void createMainMethod(ClassFile cf) throws IOException {
         cb.returnVoid();
-        AttributeInfo code = new AttributeInfo(
+        AttributeInfo ai = new AttributeInfo(
                 cp.addUtf8("Code"), cb.getBytes());
         MethodInfo mi = new MethodInfo(
                 MethodInfo.ACC_PUBLIC|MethodInfo.ACC_STATIC,
                 cp.addUtf8("main"), cp.addUtf8("([Ljava/lang/String;)V"));
-        mi.addAttribute(code);
+        mi.addAttribute(ai);
         cf.addMethod(mi);
     }
 
@@ -140,33 +142,33 @@ public class Compiler {
     }
 
     public void startCall() {
+        call = INVOKER.startCall(code, call);
     }
 
     public Type endCall(String name) {
-        return null;
+        Type result = call.invoke(name);
+        call = call.link;
+        return result;
     }
 
     public void startArg() {
-        
+        code = call.startArg();
     }
 
     public void endArg(Type t) {
-        
+        code = call.endArg(t);
     }
 
-    public Type op2(String name, Type type1, Type type2, CodeSegment exp2) {
-        Function fct = INVOKER.find(name, type1, type2);
-        if (fct == null) {
-            LOG.log(Level.SEVERE,
-                    "Operator {0} cannot be applied to types ({1},{2})",
-                    new Object[]{name, type1, type2});
-            return type1;
-        }
-        convert(STRICT, type1, fct.argTypes[0]);
-        code.append(exp2);
-        convert(STRICT, type2, fct.argTypes[1]);
-        fct.gen.generate(code);
-        return fct.resultType;
+    public void startOp2(Type type1) {
+        startCall();
+        startArg();
+        endArg(type1);
+        startArg();
+    }
+
+    public Type endOp2(String op, Type type2) {
+        endArg(type2);
+        return endCall(op);
     }
 
     public void neg(Type type) {
@@ -248,7 +250,8 @@ public class Compiler {
         if (from != to) {
             Converter.Chain chain = conv.getChain(from, to);
             if (chain == null) {
-                LOG.severe("No implicit conversion from " + from + " to " + to);
+                LOG.log(Level.SEVERE, "No implicit conversion from {0} to {1}",
+                        new Object[]{from, to});
             } else {
                 chain.apply(code);
             }

@@ -1,5 +1,6 @@
 package cfpl.compiler;
 
+import cfpl.compiler.Converter.Chain;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,29 +27,62 @@ public class Invoker {
         }
     }
 
-    public class FunctionCall {
+    public class Call {
+        public final Call link;
+        private final CodeSegment code;
         private final List<Type> argTypes = new ArrayList<>();
         private final List<CodeSegment> argCode = new ArrayList<>();
 
-        private FunctionCall() {
+        private Call(CodeSegment code, Call link) {
+            this.code = code;
+            this.link = link;
         }
 
-        void addArg(Type type, CodeSegment code) {
+        CodeSegment startArg() {
+            if (argTypes.isEmpty()) {
+                return code;
+            }
+            CodeSegment cs = code.newSegment();
+            argCode.add(cs);
+            return cs;
+        }
+
+        CodeSegment endArg(Type type) {
             argTypes.add(type);
-            if (argTypes.size() > 1) {
-                argCode.add(code);
-            }
+            return code;
         }
 
-        Type invoke(CodeSegment code, String name) {
-            Type[] types = argTypes.toArray(new Type[argTypes.size()]);
-            Function fct = find(name, types);
-            if (fct == null) {
-                LOG.log(Level.SEVERE, "Function {0} not found for arguments", name);
-                return Type.INT;
+        Type invoke(String name) {
+            List<Function> list = map.get(name);
+            if (list == null) {
+                return null;
             }
-            /*TODO */
-            return fct.resultType;
+            int argCount = argTypes.size();
+            Chain[] chains = new Chain[argCount];
+            floop:
+            for (Function fct: list) {
+                if (fct.argTypes.length == argCount) {
+                    for (int i = 0; i < argCount; ++i) {
+                        chains[i] = conv.getChain(argTypes.get(i), fct.argTypes[i]);
+                        if (chains[i] == null) {
+                            continue floop;
+                        }
+                    }
+                    // found it
+                    if (argCount > 0) {
+                        // convert fist argument
+                        chains[0].apply(code);
+                        for (int i = 1; i < argCount; ++i) {
+                            // append and convert next arguments
+                            code.append(argCode.get(i-1));
+                            chains[i].apply(code);
+                        }
+                    }
+                    fct.gen.generate(code);
+                    return fct.resultType;
+                }
+            }
+            return Type.INT;
         }
     }
 
@@ -66,23 +100,7 @@ public class Invoker {
         list.add(new Function(gen, resultType, argTypes));
     }
 
-    public Function find(String name, Type... argTypes) {
-        List<Function> list = map.get(name);
-        if (list == null) {
-            return null;
-        }
-        int argCount = argTypes.length;
-        floop:
-        for (Function fct: list) {
-            if (fct.argTypes.length == argCount) {
-                for (int i = 0; i < argCount; ++i) {
-                    if (conv.getChain(argTypes[i], fct.argTypes[i]) == null) {
-                        continue floop;
-                    }
-                }
-                return fct;
-            }
-        }
-        return null;
+    public Call startCall(CodeSegment code, Call link) {
+        return new Call(code, link);
     }
 }
