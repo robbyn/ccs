@@ -97,15 +97,18 @@ void body(): {} { <START> (statement())* <STOP> }
 void statement(): {} { assignment() | output() }
 void assignment(): {} { <VARIABLE> <EQUALS> expression() }
 void output(): { Type t; } { <OUTPUT> <COLON> t=expression() {output(t);} }
-Type expression(): {Type t; } {
-    ( t = comparison() (logicalOp() comparison())* )
+Type expression(): {Token op; Type t,t2;} {
+    ( t=comparison() (op=logicalOp() {openSegment();} t2=comparison() { t=op2(op.image,t,t2,closeSegment()); })* )
     { return t; }
 }
-void logicalOp(): {} { <AND> | <OR> }
-Type comparison(): {Token op; Type t;} {
+Token logicalOp(): {Token t;} {
+    (t=<AND> | t=<OR>)
+    { return t; }
+}
+Type comparison(): {Token op; Type t,t2;} {
     (
         t=simpleExpression()
-        ( op=comparisonOp() simpleExpression() )?
+        ( op=comparisonOp() {openSegment();} t2=simpleExpression() { t=op2(op.image,t,t2,closeSegment()); } )?
     )
     { return t; }
 }
@@ -113,20 +116,22 @@ Token comparisonOp(): {Token t;} {
     ( t=<LT> | t=<GT> | t=<LE> | t=<GE> | t=<EQ> | t=<NE> )
     {return t;}
 }
-Type simpleExpression(): {Token op;Type t,t2;} {
+Type simpleExpression(): {Token op; Type t,t2;} {
     ( t=term() ( op=addOp() {openSegment();} t2=term() { t=op2(op.image,t,t2,closeSegment()); })* )
     { return t; }
 }
-
 Token addOp(): {Token t;} {
     ( t=<PLUS> | t=<MINUS> | t=<CAT> )
     { return t; }
 }
-Type term(): { Type t; } {
-    ( t=factor() ( mulOp() factor() )* )
+Type term(): {Token op; Type t,t2;} {
+    ( t=factor() ( op=mulOp() {openSegment();} t2=factor() { t=op2(op.image,t,t2,closeSegment()); } )* )
     { return t; }
 }
-void mulOp(): {} { <MUL> | <DIV> | <MOD> }
+Token mulOp(): {Token t;} {
+    ( t=<MUL> | t=<DIV> | t=<MOD> )
+    { return t; }
+}
 Type factor(): {boolean neg = false; Type t; Token n; } {
     (
         (<PLUS>|<MINUS> {neg=!neg;}) t=factor() { if (neg) neg(t); }
