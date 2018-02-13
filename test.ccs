@@ -3,4 +3,5 @@ VAR d="TRUE" AS BOOL
 START
     OUTPUT: "Hello world!!!"
     OUTPUT: d & " " & -c
+    OUTPUT: (a<b) & " " & (a>b) & " " & (a<=b) & " " & (a>=b) & " " & (a==b) & " " & (a<>b)
 STOP 

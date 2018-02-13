@@ -226,6 +226,17 @@ public class Compiler {
                 "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
     }
 
+    private static void compare(CodeSegment code, int opCode) {
+        Label elseLabel = new Label();
+        Label endLabel = new Label();
+        code.jump(opCode, elseLabel);
+        code.pushInt(0);
+        code.jump(endLabel);
+        code.define(elseLabel);
+        code.pushInt(1);
+        code.define(endLabel);
+    }
+
     static {
         STRICT = new Converter();
         STRICT.add(Type.BOOL, Type.CHAR, (code)->{});
@@ -256,14 +267,7 @@ public class Compiler {
         });
         LOOSE.add(Type.INT, Type.CHAR, (code)->{});
         LOOSE.add(Type.INT, Type.BOOL, (code)->{
-            Label elseLabel = new Label();
-            Label endLabel = new Label();
-            code.jump(ByteCode.IFEQ, elseLabel);
-            code.pushInt(0);
-            code.jump(endLabel);
-            code.define(elseLabel);
-            code.pushInt(1);
-            code.define(endLabel);
+            compare(code, ByteCode.IFEQ);
         });
         LOOSE.add(Type.STRING, Type.BOOL, (code)->{
             code.invokeStatic("java/lang/Boolean",
@@ -282,5 +286,80 @@ public class Compiler {
             code.invokeVirtual("java/lang/String", "concat",
                     "(Ljava/lang/String;)Ljava/lang/String;");
         }, "&", Type.STRING, Type.STRING, Type.STRING);
+        INVOKER.add((code)->{
+            code.andInt();
+        }, "AND", Type.BOOL, Type.BOOL, Type.BOOL);
+        INVOKER.add((code)->{
+            code.andInt();
+        }, "OR", Type.BOOL, Type.BOOL, Type.BOOL);
+        INVOKER.add((code)->{
+            code.addInt();
+        }, "+", Type.INT, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.addDouble();
+        }, "+", Type.FLOAT, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            code.subInt();
+        }, "-", Type.INT, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.subDouble();
+        }, "-", Type.FLOAT, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            code.mulInt();
+        }, "*", Type.INT, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.mulDouble();
+        }, "*", Type.FLOAT, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            code.divInt();
+        }, "/", Type.INT, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.divDouble();
+        }, "/", Type.FLOAT, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            code.remInt();
+        }, "%", Type.INT, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            compare(code, ByteCode.IF_ICMPEQ);
+        }, "==", Type.BOOL, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.cmplDouble();
+            compare(code, ByteCode.IFEQ);
+        }, "==", Type.BOOL, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            compare(code, ByteCode.IF_ICMPNE);
+        }, "<>", Type.BOOL, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.cmplDouble();
+            compare(code, ByteCode.IFNE);
+        }, "<>", Type.BOOL, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            compare(code, ByteCode.IF_ICMPLT);
+        }, "<", Type.BOOL, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.cmplDouble();
+            compare(code, ByteCode.IFLT);
+        }, "<", Type.BOOL, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            compare(code, ByteCode.IF_ICMPLE);
+        }, "<=", Type.BOOL, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.cmplDouble();
+            compare(code, ByteCode.IFLE);
+        }, "<=", Type.BOOL, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            compare(code, ByteCode.IF_ICMPGT);
+        }, ">", Type.BOOL, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.cmplDouble();
+            compare(code, ByteCode.IFGT);
+        }, ">", Type.BOOL, Type.FLOAT, Type.FLOAT);
+        INVOKER.add((code)->{
+            compare(code, ByteCode.IF_ICMPGE);
+        }, ">=", Type.BOOL, Type.INT, Type.INT);
+        INVOKER.add((code)->{
+            code.cmplDouble();
+            compare(code, ByteCode.IFGE);
+        }, ">=", Type.BOOL, Type.FLOAT, Type.FLOAT);
     }
 }
