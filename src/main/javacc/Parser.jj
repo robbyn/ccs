@@ -53,9 +53,7 @@ TOKEN:
 {
     < INT_VALUE: (<DIGIT>)+ >
     | < FLOAT_VALUE: <INT_VALUE> "." (<DIGIT>)* | "." (<DIGIT>)+ >
-    | < CHAR_VALUE: "\'" (~["\'","\\"]|<ESCAPE>) "\'" >
-    | < STRING_VALUE: "\"" (~["\"","\\"]|<ESCAPE>)* "\"" >
-    | < #ESCAPE: "[" ~[] "]" >
+    | < STRING_VALUE : "\"" (~["\""])* "\"" | "'" (~["'"])* "'" >
 }
 
 void input(): {} { (declaration())*  body() }
@@ -154,7 +152,6 @@ Type literalValue(): { Token t; Type result; }
     (
         t=<INT_VALUE> { literalInt(t.image); result = Type.INT; }
         | t=<FLOAT_VALUE> { literalInt(t.image); result = Type.FLOAT; }
-        | t=<CHAR_VALUE> { literalChar(t.image); result = Type.CHAR; }
         | t=<STRING_VALUE> { literalString(t.image); result = Type.STRING; }
     )
     { return result; }

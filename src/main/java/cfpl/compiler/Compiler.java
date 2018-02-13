@@ -332,6 +332,11 @@ public class Compiler {
         LOOSE.add(Type.INT, Type.BOOL, (code)->{
             compare(code, ByteCode.IFEQ);
         });
+        LOOSE.add(Type.STRING, Type.CHAR, (code)->{
+            code.pushInt(0);
+            code.invokeVirtual("java/lang/String",
+                    "charAt", "(I)C");
+        });
         LOOSE.add(Type.STRING, Type.BOOL, (code)->{
             code.invokeStatic("java/lang/Boolean",
                     "parseBoolean", "(Ljava/lang/String;)Z");
