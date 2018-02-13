@@ -24,6 +24,8 @@ public class Compiler {
             = Logger.getLogger(Compiler.class.getName());
 
     private static final String SUFFIX = ".class";
+    private static final Converter STRICT;
+    private static final Converter LOOSE;
 
     private final ConstantPool cp = new ConstantPool();
     private final CodeBuilder cb = new CodeBuilder(cp, 0);
@@ -91,7 +93,7 @@ public class Compiler {
                 defaultValue(type);
             } else {
                 code.append(var.initExpr);
-                convert(var.initType, type);
+                convert(LOOSE, var.initType, type);
             }
             varMap.put(var.name, new Variable(type, addr));
             storeVar(type, addr);
@@ -114,75 +116,13 @@ public class Compiler {
         }
     }
 
-    private void convert(Type from, Type to) {
+    private void convert(Converter conv, Type from, Type to) {
         if (from != to) {
-            switch (from) {
-                case BOOL:
-                    if (to == Type.STRING) {
-                        code.invokeStatic("java/lang/Boolean", "toString",
-                                "(Z)Ljava/lang/String;");
-                        break;
-                    }
-                case CHAR:
-                    if (to == Type.STRING) {
-                        code.invokeStatic("java/lang/Character", "toString",
-                                "(C)Ljava/lang/String;");
-                        break;
-                    }
-                case INT:
-                    switch (to) {
-                        case BOOL:
-                            Label elseLabel = new Label();
-                            Label endLabel = new Label();
-                            code.jump(ByteCode.IFEQ, elseLabel);
-                            code.pushInt(0);
-                            code.jump(endLabel);
-                            code.define(elseLabel);
-                            code.pushInt(1);
-                            code.define(endLabel);
-                            break;
-                        case CHAR:
-                        case INT:
-                        case FLOAT:
-                            code.intToDouble();
-                            break;
-                        case STRING:
-                            code.invokeStatic("java/lang/Integer", "toString",
-                                    "(I)Ljava/lang/String;");
-                            break;
-                    }
-                    break;
-                case FLOAT:
-                    switch (to) {
-                        case BOOL:
-                        case INT:
-                        case CHAR:
-                            code.doubleToInt();
-                            convert(Type.INT, to);
-                            break;
-                        case STRING:
-                            code.invokeStatic("java/lang/Double", "toString",
-                                    "(D)Ljava/lang/String;");
-                            break;
-                            
-                    }
-                    break;
-                case STRING:
-                    switch (to) {
-                        case BOOL:
-                            code.invokeStatic("java/lang/Boolean",
-                                    "parseBoolean", "(Ljava/lang/String;)Z");
-                            break;
-                        case CHAR:
-                        case INT:
-                            code.invokeStatic("java/lang/Integer", "parseInt",
-                                    "(Ljava/lang/String;)I");
-                            break;
-                        case FLOAT:
-                            code.invokeStatic("java/lang/Double", "parseDouble",
-                                    "(Ljava/lang/String;)D");
-                            break;
-                    }
+            Converter.Chain chain = conv.getChain(from, to);
+            if (chain == null) {
+                LOG.severe("No implicit conversion from " + from + " to " + to);
+            } else {
+                chain.apply(code);
             }
         }
     }
@@ -262,10 +202,63 @@ public class Compiler {
     }
 
     public void output(Type type) {
-        convert(type, Type.STRING);
+        convert(LOOSE, type, Type.STRING);
         code.getStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
         code.swap();
         code.invokeVirtual(
                 "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+    }
+
+    static {
+        STRICT = new Converter();
+        STRICT.add(Type.BOOL, Type.CHAR, (code)->{});
+        STRICT.add(Type.CHAR, Type.INT, (code)->{});
+        STRICT.add(Type.INT, Type.FLOAT, (code)->{
+                code.intToDouble();
+            });
+
+        STRICT.add(Type.BOOL, Type.STRING, (code)->{
+                code.invokeStatic("java/lang/Boolean", "toString",
+                        "(Z)Ljava/lang/String;");
+            });
+        STRICT.add(Type.CHAR, Type.STRING, (code)->{
+                code.invokeStatic("java/lang/Character", "toString",
+                        "(C)Ljava/lang/String;");
+            });
+        STRICT.add(Type.INT, Type.STRING, (code)->{
+                code.invokeStatic("java/lang/Integer", "toString",
+                        "(I)Ljava/lang/String;");
+            });
+        STRICT.add(Type.FLOAT, Type.STRING, (code)->{
+                code.invokeStatic("java/lang/Double", "toString",
+                        "(D)Ljava/lang/String;");
+            });
+        LOOSE = new Converter(STRICT);
+        LOOSE.add(Type.FLOAT, Type.INT, (code) -> {
+            code.doubleToInt();
+        });
+        LOOSE.add(Type.INT, Type.CHAR, (code)->{});
+        LOOSE.add(Type.INT, Type.BOOL, (code)->{
+            Label elseLabel = new Label();
+            Label endLabel = new Label();
+            code.jump(ByteCode.IFEQ, elseLabel);
+            code.pushInt(0);
+            code.jump(endLabel);
+            code.define(elseLabel);
+            code.pushInt(1);
+            code.define(endLabel);
+        });
+        LOOSE.add(Type.STRING, Type.BOOL, (code)->{
+            code.invokeStatic("java/lang/Boolean",
+                    "parseBoolean", "(Ljava/lang/String;)Z");
+        });
+        LOOSE.add(Type.STRING, Type.INT, (code)->{
+            code.invokeStatic("java/lang/Integer", "parseInt",
+                    "(Ljava/lang/String;)I");
+        });
+        LOOSE.add(Type.STRING, Type.FLOAT, (code)->{
+            code.invokeStatic("java/lang/Double", "parseDouble",
+                    "(Ljava/lang/String;)D");
+        });
     }
 }
