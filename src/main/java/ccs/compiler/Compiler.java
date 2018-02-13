@@ -103,6 +103,133 @@ public class Compiler {
         varList.clear();
     }
 
+    public void literalInt(String s) {
+        code.pushInt(Integer.parseInt(s));
+    }
+
+    public void literalFloat(String s) {
+        code.pushInt(Integer.parseInt(s));
+    }
+
+    public void literalChar(String s) {
+        code.pushInt(Strings.unescapeChar(s));
+    }
+
+    public void literalString(String s) {
+        code.pushString(Strings.unescape(s));
+    }
+
+    public Type loadVar(String name) {
+        Variable v = varMap.get(name);
+        if (v == null) {
+            LOG.log(Level.SEVERE, "Variable not declared: {0}", name);
+            return Type.INT;
+        }
+        loadVar(v.type, v.addr);
+        return v.type;
+    }
+
+    public void storeVar(Type type, String name) {
+        Variable v = varMap.get(name);
+        if (v == null) {
+            LOG.log(Level.SEVERE, "Variable not declared: {0}", name);
+            return;
+        }
+        convert(LOOSE, type, v.type);
+        storeVar(v.type, v.addr);
+    }
+
+    private void storeVar(Type type, int addr) {
+        switch (type) {
+            case BOOL:
+            case CHAR:
+            case INT:
+                code.storeInt(addr);
+                break;
+            case FLOAT:
+                code.storeDouble(addr);
+                break;
+            case STRING:
+                code.storeRef(addr);
+                break;
+        }
+    }
+
+    public Type op2(String name, Type type1, Type type2, CodeSegment exp2) {
+        Function fct = INVOKER.find(STRICT, name, type1, type2);
+        if (fct == null) {
+            LOG.log(Level.SEVERE,
+                    "Operator {0} cannot be applied to types ({1},{2})",
+                    new Object[]{name, type1, type2});
+            return type1;
+        }
+        convert(STRICT, type1, fct.argTypes[0]);
+        code.append(exp2);
+        convert(STRICT, type2, fct.argTypes[1]);
+        fct.gen.generate(code);
+        return fct.resultType;
+    }
+
+    public void neg(Type type) {
+        switch (type) {
+            case BOOL:
+            case CHAR:
+            case INT:
+                code.negInt();
+                break;
+            case FLOAT:
+                code.negDouble();
+                break;
+            case STRING:
+                LOG.severe("Cannot negate a string");
+                break;
+        }
+    }
+
+    public void output(Type type) {
+        convert(LOOSE, type, Type.STRING);
+        code.getStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
+        code.swap();
+        code.invokeVirtual(
+                "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+    }
+
+    public Label startIf(Type type) {
+        Label label = new Label();
+        convert(LOOSE, type, Type.BOOL);
+        code.jump(ByteCode.IFEQ, label);
+        return label;
+    }
+
+    public Label startElse(Label label) {
+        Label endLabel = new Label();
+        code.jump(endLabel);
+        code.define(label);
+        return endLabel;
+    }
+
+    public void endIf(Label label) {
+        code.define(label);
+    }
+
+    public Label startWhile() {
+        Label label = new Label();
+        code.define(label);
+        return label;
+    }
+
+    public Label whileCond(Type type) {
+        Label label = new Label();
+        convert(LOOSE, type, Type.BOOL);
+        code.jump(ByteCode.IFEQ, label);
+        return label;
+    }
+
+    public void endWhile(Label begin, Label end) {
+        code.jump(begin);
+        code.define(end);
+    }
+
     private void defaultValue(Type type) {
         switch (type) {
             case INT:
@@ -129,63 +256,6 @@ public class Compiler {
         }
     }
 
-    public void literalInt(String s) {
-        code.pushInt(Integer.parseInt(s));
-    }
-
-    public void literalFloat(String s) {
-        code.pushInt(Integer.parseInt(s));
-    }
-
-    public void literalChar(String s) {
-        code.pushInt(Strings.unescapeChar(s));
-    }
-
-    public void literalString(String s) {
-        code.pushString(Strings.unescape(s));
-    }
-
-    private void storeVar(Type type, int addr) {
-        switch (type) {
-            case BOOL:
-            case CHAR:
-            case INT:
-                code.storeInt(addr);
-                break;
-            case FLOAT:
-                code.storeDouble(addr);
-                break;
-            case STRING:
-                code.storeRef(addr);
-                break;
-        }
-    }
-
-    public Type loadVar(String name) {
-        Variable v = varMap.get(name);
-        if (v == null) {
-            LOG.log(Level.SEVERE, "Variable not found: {0}", name);
-            return Type.INT;
-        }
-        loadVar(v.type, v.addr);
-        return v.type;
-    }
-
-    public Type op2(String name, Type type1, Type type2, CodeSegment exp2) {
-        Function fct = INVOKER.find(STRICT, name, type1, type2);
-        if (fct == null) {
-            LOG.log(Level.SEVERE,
-                    "Operator {0} cannot be applied to types ({1},{2})",
-                    new Object[]{name, type1, type2});
-            return type1;
-        }
-        convert(STRICT, type1, fct.argTypes[0]);
-        code.append(exp2);
-        convert(STRICT, type2, fct.argTypes[1]);
-        fct.gen.generate(code);
-        return fct.resultType;
-    }
-
     private void loadVar(Type type, int addr) {
         switch (type) {
             case BOOL:
@@ -200,30 +270,6 @@ public class Compiler {
                 code.loadRef(addr);
                 break;
         }
-    }
-
-    public void neg(Type type) {
-        switch (type) {
-            case BOOL:
-            case CHAR:
-            case INT:
-                code.negInt();
-                break;
-            case FLOAT:
-                code.negDouble();
-                break;
-            case STRING:
-                LOG.severe("Cannot negate a string");
-                break;
-        }
-    }
-
-    public void output(Type type) {
-        convert(LOOSE, type, Type.STRING);
-        code.getStatic("java/lang/System", "out", "Ljava/io/PrintStream;");
-        code.swap();
-        code.invokeVirtual(
-                "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
     }
 
     private static void compare(CodeSegment code, int opCode) {

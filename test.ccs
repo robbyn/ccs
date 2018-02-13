@@ -4,4 +4,18 @@ START
     OUTPUT: "Hello world!!!"
     OUTPUT: d & " " & -c
     OUTPUT: (a<b) & " " & (a>b) & " " & (a<=b) & " " & (a>=b) & " " & (a==b) & " " & (a<>b)
+    IF (d)
+        START
+            OUTPUT: "TRUE"
+        STOP
+    ELSE
+        START
+            OUTPUT: "FALSE"
+        STOP
+    c=1
+    WHILE (c<=5)
+        START
+            OUTPUT: "c=" & c
+            c=c+1
+        STOP
 STOP 

@@ -5,6 +5,7 @@ options {
 PARSER_BEGIN(Parser)
 package ccs.parser;
 import ccs.compiler.Compiler;
+import org.tastefuljava.classfile.Label;
 import org.tastefuljava.classfile.CodeSegment;
 import ccs.compiler.Type;
 import ccs.compiler.Strings;
@@ -28,7 +29,8 @@ TOKEN : { < START: "START" > | < STOP: "STOP" > | < OUTPUT: "OUTPUT" > }
 TOKEN : /* KEYWORDS */
 {
     <INT: "INT"> | <BOOL:"BOOL"> | <FLOAT:"FLOAT"> | <CHAR:"CHAR">
-    |<AND: "AND"> | <OR: "OR"> | <NOT: "NOT">
+    | <IF: "IF"> | <ELSE: "ELSE"> | <WHILE: "WHILE">
+    | <AND: "AND"> | <OR: "OR"> | <NOT: "NOT">
 }
 
 TOKEN :
@@ -94,8 +96,23 @@ Type type(): {Type result;} {
     { return result; }
 }
 void body(): {} { <START> (statement())* <STOP> }
-void statement(): {} { assignment() | output() }
-void assignment(): {} { <VARIABLE> <EQUALS> expression() }
+void statement(): {} {
+    assignment()
+    | ifStatement()
+    | whileStatement()
+    | output()
+}
+void assignment(): {Token n; Type t;} { n=<VARIABLE> <EQUALS> t=expression()
+    {storeVar(t,n.image);}
+}
+void ifStatement(): {Label l; Type t;} {
+    <IF> <LPAR> t=expression() <RPAR> {l=startIf(t);} body()
+    (<ELSE> {l=startElse(l);} body())? {endIf(l);}
+}
+void whileStatement(): {Label ls,le; Type t;} {
+    <WHILE> {ls=startWhile();} <LPAR> t=expression() <RPAR>  {le=whileCond(t);}
+    body() {endWhile(ls,le);}
+}
 void output(): { Type t; } { <OUTPUT> <COLON> t=expression() {output(t);} }
 Type expression(): {Token op; Type t,t2;} {
     ( t=comparison() (op=logicalOp() {openSegment();} t2=comparison() { t=op2(op.image,t,t2,closeSegment()); })* )
