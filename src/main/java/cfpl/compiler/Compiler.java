@@ -1,7 +1,6 @@
 package cfpl.compiler;
 
 import cfpl.compiler.Invoker.Call;
-import cfpl.compiler.Invoker.Function;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -96,7 +95,7 @@ public class Compiler {
             if (var.initType == null || var.initExpr == null) {
                 defaultValue(type);
             } else {
-                code.append(var.initExpr);
+                var.initExpr.commit();
                 convert(LOOSE, var.initType, type);
             }
             varMap.put(var.name, new Variable(type, addr));

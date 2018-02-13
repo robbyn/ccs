@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.tastefuljava.classfile.CodeSegment;
 
@@ -74,7 +73,7 @@ public class Invoker {
                         chains[0].apply(code);
                         for (int i = 1; i < argCount; ++i) {
                             // append and convert next arguments
-                            code.append(argCode.get(i-1));
+                            argCode.get(i-1).commit();
                             chains[i].apply(code);
                         }
                     }
