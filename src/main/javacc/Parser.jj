@@ -67,7 +67,7 @@ void declaration(): {Type t;}
 void varDeclaration():
     { Token n; CodeSegment seg = null; Type t = null; }
 {
-    ( n=<VARIABLE> (<EQUALS> { openSegment(); } t=literalValue() { seg = closeSegment(); })? )
+    ( n=<VARIABLE> (<EQUALS> { openSegment(); } t=expression() { seg = closeSegment(); })? )
     {
         if (seg == null) {
             addVar(n.image, n.beginLine, n.beginColumn);
@@ -75,16 +75,6 @@ void varDeclaration():
             addVar(n.image, n.beginLine, n.beginColumn, seg, t);
         }
     }
-}
-Type literalValue(): { Token t; Type result; }
-{
-    (
-        t=<INT_VALUE> { literalInt(t.image); result = Type.INT; }
-        | t=<FLOAT_VALUE> { literalInt(t.image); result = Type.FLOAT; }
-        | t=<CHAR_VALUE> { literalChar(t.image); result = Type.CHAR; }
-        | t=<STRING_VALUE> { literalString(t.image); result = Type.STRING; }
-    )
-    { return result; }
 }
 Type type(): {Type result;} {
     (
@@ -154,8 +144,18 @@ Type factor(): {boolean neg = false; Type t; Token n; } {
         (<PLUS>|<MINUS> {neg=!neg;}) t=factor() { if (neg) neg(t); }
         | <LPAR> t=expression() <RPAR>
         | <NOT> t=expression()
-        | n=<VARIABLE> { t = loadVar(n.image); }
+        | n=<VARIABLE> { t=loadVar(n.image); }
         | t=literalValue()
     )
     { return t; }
+}
+Type literalValue(): { Token t; Type result; }
+{
+    (
+        t=<INT_VALUE> { literalInt(t.image); result = Type.INT; }
+        | t=<FLOAT_VALUE> { literalInt(t.image); result = Type.FLOAT; }
+        | t=<CHAR_VALUE> { literalChar(t.image); result = Type.CHAR; }
+        | t=<STRING_VALUE> { literalString(t.image); result = Type.STRING; }
+    )
+    { return result; }
 }

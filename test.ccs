@@ -1,6 +1,8 @@
-VAR a=100, b=200, c=300 AS INT 
+VAR a=100, b=200, c=300 AS INT
+VAR f=c+1 AS FLOAT
 VAR d="TRUE" AS BOOL 
 START
+    OUTPUT: f
     OUTPUT: "Hello world!!!"
     OUTPUT: d & " " & -c
     OUTPUT: (a<b) & " " & (a>b) & " " & (a<=b) & " " & (a>=b) & " " & (a==b) & " " & (a<>b)
@@ -15,7 +17,10 @@ START
     c=1
     WHILE (c<=5)
         START
-            OUTPUT: "c=" & c
+            IF (c%2 <> 0)
+               START
+                  OUTPUT: "c=" & c
+               STOP
             c=c+1
         STOP
 STOP 
