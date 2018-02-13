@@ -144,8 +144,7 @@ Type factor(): {boolean neg = false; Type t; Token n; } {
         (<PLUS>|<MINUS> {neg=!neg;}) t=factor() { if (neg) neg(t); }
         | <LPAR> t=expression() <RPAR>
         | <NOT> t=expression()
-        | LOOKAHEAD(2) n=<NAME> { t=loadVar(n.image); }
-        | LOOKAHEAD(2) n=<NAME> <LPAR> {startCall();} (LOOKAHEAD(2) actualArg() (<COMM> actualArg())*)? <RPAR> {t=endCall(n.image);}
+        | n=<NAME> (<LPAR> {startCall();} (LOOKAHEAD(2) actualArg() (<COMM> actualArg())*)? <RPAR> {t=endCall(n.image);}| { t=loadVar(n.image); })
         | t=literalValue()
     )
     { return t; }

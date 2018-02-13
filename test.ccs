@@ -23,4 +23,5 @@ START
                STOP
             c=c+1
         STOP
+    OUTPUT: sin(b)
 STOP 
