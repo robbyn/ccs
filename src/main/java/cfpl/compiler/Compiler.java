@@ -139,24 +139,23 @@ public class Compiler {
         storeVar(v.type, v.addr);
     }
 
-    private void storeVar(Type type, int addr) {
-        switch (type) {
-            case BOOL:
-            case CHAR:
-            case INT:
-                code.storeInt(addr);
-                break;
-            case FLOAT:
-                code.storeDouble(addr);
-                break;
-            case STRING:
-                code.storeRef(addr);
-                break;
-        }
+    public void startCall() {
+    }
+
+    public Type endCall(String name) {
+        return null;
+    }
+
+    public void startArg() {
+        
+    }
+
+    public void endArg(Type t) {
+        
     }
 
     public Type op2(String name, Type type1, Type type2, CodeSegment exp2) {
-        Function fct = INVOKER.find(STRICT, name, type1, type2);
+        Function fct = INVOKER.find(name, type1, type2);
         if (fct == null) {
             LOG.log(Level.SEVERE,
                     "Operator {0} cannot be applied to types ({1},{2})",
@@ -272,6 +271,22 @@ public class Compiler {
         }
     }
 
+    private void storeVar(Type type, int addr) {
+        switch (type) {
+            case BOOL:
+            case CHAR:
+            case INT:
+                code.storeInt(addr);
+                break;
+            case FLOAT:
+                code.storeDouble(addr);
+                break;
+            case STRING:
+                code.storeRef(addr);
+                break;
+        }
+    }
+
     private static void compare(CodeSegment code, int opCode) {
         Label elseLabel = new Label();
         Label endLabel = new Label();
@@ -327,7 +342,7 @@ public class Compiler {
             code.invokeStatic("java/lang/Double", "parseDouble",
                     "(Ljava/lang/String;)D");
         });
-        INVOKER = new Invoker();
+        INVOKER = new Invoker(STRICT);
         INVOKER.add((code)->{
             code.invokeVirtual("java/lang/String", "concat",
                     "(Ljava/lang/String;)Ljava/lang/String;");
