@@ -1,4 +1,4 @@
-package ccs.compiler;
+package cfpl.compiler;
 
 public class Strings {
     public static String unescape(String s) {

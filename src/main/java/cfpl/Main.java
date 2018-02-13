@@ -1,12 +1,12 @@
-package ccs;
+package cfpl;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import ccs.parser.ParseException;
-import ccs.parser.Parser;
+import cfpl.parser.ParseException;
+import cfpl.parser.Parser;
 import java.io.File;
 
 public class Main {

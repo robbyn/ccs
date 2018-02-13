@@ -3,12 +3,12 @@ options {
     IGNORE_CASE = false;
 }
 PARSER_BEGIN(Parser)
-package ccs.parser;
-import ccs.compiler.Compiler;
+package cfpl.parser;
+import cfpl.compiler.Compiler;
+import cfpl.compiler.Type;
+import cfpl.compiler.Strings;
 import org.tastefuljava.classfile.Label;
 import org.tastefuljava.classfile.CodeSegment;
-import ccs.compiler.Type;
-import ccs.compiler.Strings;
 
 public class Parser extends Compiler {
     public void parse() throws ParseException {

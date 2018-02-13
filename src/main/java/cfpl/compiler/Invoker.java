@@ -1,4 +1,4 @@
-package ccs.compiler;
+package cfpl.compiler;
 
 import java.util.ArrayList;
 import java.util.HashMap;

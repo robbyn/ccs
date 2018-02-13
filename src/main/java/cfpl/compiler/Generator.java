@@ -1,4 +1,4 @@
-package ccs.compiler;
+package cfpl.compiler;
 
 import org.tastefuljava.classfile.CodeSegment;
 

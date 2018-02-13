@@ -1,4 +1,4 @@
-package ccs.compiler;
+package cfpl.compiler;
 
 public class Variable {
     public final Type type;
