@@ -1,5 +1,5 @@
 VAR a=100, b=200, c=300 AS INT 
-VAR d="true" AS BOOL 
+VAR d="TRUE" AS BOOL 
 START
     OUTPUT: "Hello world!!!"
     OUTPUT: d

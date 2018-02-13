@@ -32,7 +32,7 @@ public class Strings {
                     break;
             }
         }
-        return buf.toString();
+        return buf.substring(1, buf.length()-1); // remove enclosing quote marks
     }
 
     public static char unescapeChar(String s) {
