@@ -1,5 +1,6 @@
 package ccs.compiler;
 
+import ccs.compiler.Invoker.Function;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class Compiler {
     private static final String SUFFIX = ".class";
     private static final Converter STRICT;
     private static final Converter LOOSE;
+    private static final Invoker INVOKER;
 
     private final ConstantPool cp = new ConstantPool();
     private final CodeBuilder cb = new CodeBuilder(cp, 0);
@@ -169,6 +171,21 @@ public class Compiler {
         return v.type;
     }
 
+    public Type op2(String name, Type type1, Type type2, CodeSegment exp2) {
+        Function fct = INVOKER.find(STRICT, name, type1, type2);
+        if (fct == null) {
+            LOG.log(Level.SEVERE,
+                    "Operator {0} cannot be applied to types ({1},{2})",
+                    new Object[]{name, type1, type2});
+            return type1;
+        }
+        convert(STRICT, type1, fct.argTypes[0]);
+        code.append(exp2);
+        convert(STRICT, type2, fct.argTypes[1]);
+        fct.gen.generate(code);
+        return fct.resultType;
+    }
+
     private void loadVar(Type type, int addr) {
         switch (type) {
             case BOOL:
@@ -260,5 +277,10 @@ public class Compiler {
             code.invokeStatic("java/lang/Double", "parseDouble",
                     "(Ljava/lang/String;)D");
         });
+        INVOKER = new Invoker();
+        INVOKER.add((code)->{
+            code.invokeVirtual("java/lang/String", "concat",
+                    "(Ljava/lang/String;)Ljava/lang/String;");
+        }, "&", Type.STRING, Type.STRING, Type.STRING);
     }
 }

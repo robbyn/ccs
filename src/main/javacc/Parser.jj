@@ -113,12 +113,15 @@ Token comparisonOp(): {Token t;} {
     ( t=<LT> | t=<GT> | t=<LE> | t=<GE> | t=<EQ> | t=<NE> )
     {return t;}
 }
-Type simpleExpression(): {Type t;} {
-    ( t=term() ( addOp() term() )* )
+Type simpleExpression(): {Token op;Type t,t2;} {
+    ( t=term() ( op=addOp() {openSegment();} t2=term() { t=op2(op.image,t,t2,closeSegment()); })* )
     { return t; }
 }
 
-void addOp(): {} { <PLUS> | <MINUS> | <CAT> }
+Token addOp(): {Token t;} {
+    ( t=<PLUS> | t=<MINUS> | t=<CAT> )
+    { return t; }
+}
 Type term(): { Type t; } {
     ( t=factor() ( mulOp() factor() )* )
     { return t; }
