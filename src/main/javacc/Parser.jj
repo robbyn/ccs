@@ -143,7 +143,7 @@ void assignment(): {Token n; Type t;} { n=<NAME> <EQUALS> t=expression()
 
 void ifStatement(): {Label l; Type t;} {
     <IF> <LPAR> t=expression() <RPAR> {l=startIf(t);}  (<EOL>)+ body()
-    (LOOKAHEAD(2) (<EOL>)+ <ELSE> {l=startElse(l);}  (<EOL>)+ body())? {endIf(l);}
+    (LOOKAHEAD(2)(<EOL>)+ <ELSE> {l=startElse(l);}  (<EOL>)+ body())? {endIf(l);}
 }
 
 void whileStatement(): {Label ls,le; Type t;} {
