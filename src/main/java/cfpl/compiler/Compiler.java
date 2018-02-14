@@ -83,15 +83,7 @@ public class Compiler {
 
     public void declareAllVars(Type type) {
         for (VariableDeclaration var: varList) {
-            int addr;
-            switch (type) {
-                case FLOAT:
-                    addr = cb.newLocal2();
-                    break;
-                default:
-                    addr = cb.newLocal();
-                    break;
-            }
+            int addr = cb.newLocal(type.size);
             if (var.initType == null || var.initExpr == null) {
                 defaultValue(type);
             } else {
@@ -232,6 +224,7 @@ public class Compiler {
 
     private void defaultValue(Type type) {
         switch (type) {
+            case BOOL:
             case INT:
             case CHAR:
                 code.pushInt(0);
