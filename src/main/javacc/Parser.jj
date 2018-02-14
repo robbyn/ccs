@@ -23,7 +23,7 @@ SKIP : {
     | <"/*"(~["/"])*  "*""/" >
 }
 TOKEN : { /* KEYWORDS */
-    < VAR: "VAR" > | < AS: "AS" >}
+    < VAR: "VAR" > | < AS: "AS" >
     | <INT: "INT"> | <BOOL:"BOOL"> | <FLOAT:"FLOAT"> | <CHAR:"CHAR">
     | < START: "START" > | < STOP: "STOP" > | < OUTPUT: "OUTPUT" >
     | <IF: "IF"> | <ELSE: "ELSE"> | <WHILE: "WHILE">

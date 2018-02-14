@@ -15,7 +15,7 @@ public class Main {
         try (InputStream in = new FileInputStream(file)) {
             Parser parser = new Parser(in, "UTF-8");
             parser.parse();
-            parser.writeTo(changeExtension(file, ".ccs", ".class"));
+            parser.writeTo(changeExtension(file, ".cfpl", ".class"));
         } catch (IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
