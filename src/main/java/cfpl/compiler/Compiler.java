@@ -422,8 +422,13 @@ public class Compiler {
             code.cmplDouble();
             compare(code, ByteCode.IFGE);
         }, ">=", Type.BOOL, Type.FLOAT, Type.FLOAT);
+
         INVOKER.add((code)->{
             code.invokeStatic("java/lang/Math", "sin", "(D)D");
         }, "sin", Type.FLOAT, Type.FLOAT);
+
+        INVOKER.add((code)->{
+            code.getStatic("java/lang/Math", "PI", "D");
+        }, "pi", Type.FLOAT);
     }
 }

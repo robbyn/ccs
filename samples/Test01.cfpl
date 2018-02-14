@@ -25,4 +25,5 @@ START
             c=c+1
         STOP
     OUTPUT: sin(b)
+    OUTPUT: pi()
 STOP 

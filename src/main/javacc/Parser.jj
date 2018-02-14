@@ -156,7 +156,7 @@ void output(): { Type t; } {
 }
 
 Type expression(): {Token op; Type t,t2;} {
-    ( t=comparison() (LOOKAHEAD(2) op=logicalOp() {startOp2(t);} t2=comparison() { t=endOp2(op.image,t2); })* )
+    ( t=comparison() (LOOKAHEAD(logicalOp()) op=logicalOp() {startOp2(t);} t2=comparison() { t=endOp2(op.image,t2); })* )
     { return t; }
 }
 
@@ -168,7 +168,7 @@ Token logicalOp(): {Token t;} {
 Type comparison(): {Token op; Type t,t2;} {
     (
         t=simpleExpression()
-        (LOOKAHEAD(2) op=comparisonOp() {startOp2(t);} t2=simpleExpression() { t=endOp2(op.image,t2); } )?
+        (LOOKAHEAD(comparisonOp()) op=comparisonOp() {startOp2(t);} t2=simpleExpression() { t=endOp2(op.image,t2); } )?
     )
     { return t; }
 }
@@ -179,7 +179,7 @@ Token comparisonOp(): {Token t;} {
 }
 
 Type simpleExpression(): {Token op; Type t,t2;} {
-    ( t=term() (LOOKAHEAD(2) op=addOp() {startOp2(t);} t2=term() { t=endOp2(op.image,t2); })* )
+    ( t=term() (LOOKAHEAD(addOp()) op=addOp() {startOp2(t);} t2=term() { t=endOp2(op.image,t2); })* )
     { return t; }
 }
 
@@ -189,7 +189,7 @@ Token addOp(): {Token t;} {
 }
 
 Type term(): {Token op; Type t,t2;} {
-    ( t=factor() (LOOKAHEAD(2) op=mulOp() {startOp2(t);} t2=factor() { t=endOp2(op.image,t2); } )* )
+    ( t=factor() (LOOKAHEAD(mulOp()) op=mulOp() {startOp2(t);} t2=factor() { t=endOp2(op.image,t2); } )* )
     { return t; }
 }
 
@@ -203,7 +203,7 @@ Type factor(): {boolean neg = false; Type t; Token n; } {
         (<PLUS>|<MINUS> {neg=!neg;}) t=factor() { if (neg) neg(t); }
         | <LPAR> t=expression() <RPAR>
         | <NOT> t=expression()
-        | n=<NAME> (<LPAR> {startCall();} (LOOKAHEAD(2) actualArg() (<COMM> actualArg())*)? <RPAR> {t=endCall(n.image);}| { t=loadVar(n.image); })
+        | n=<NAME> (<LPAR> {startCall();} (<RPAR> | actualArg() (<COMM> actualArg())* <RPAR>) {t=endCall(n.image);}| { t=loadVar(n.image); })
         | t=literalValue()
     )
     { return t; }
