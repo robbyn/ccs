@@ -2,6 +2,7 @@ options {
     STATIC = false;
     IGNORE_CASE = false;
 }
+
 PARSER_BEGIN(Parser)
 package cfpl.parser;
 import cfpl.compiler.Compiler;
@@ -20,14 +21,18 @@ PARSER_END(Parser)
 <DEFAULT,NOT_BOL> SKIP : {
     < " " | "\t" >
 }
+
+// Comments
 <DEFAULT> SKIP: {
     < "*" (~["\r", "\n"])* ("\r" | "\n" | "\r\n") >
 }
+
 <NOT_BOL> TOKEN : {
     < EOL: "\r" | "\n" | "\r\n" >: DEFAULT
 }
+
+// Keywords
 <DEFAULT,NOT_BOL> TOKEN : {
-    // Keywords
     < VAR: "VAR" >: NOT_BOL
     | < AS: "AS" >: NOT_BOL
     | <INT: "INT">: NOT_BOL
@@ -45,15 +50,16 @@ PARSER_END(Parser)
     | <NOT: "NOT">: NOT_BOL
 }
 
+// Specials
 <DEFAULT,NOT_BOL> TOKEN : {
-    // Specials
     < EQUALS: "=" >: NOT_BOL
     | < COLON: ":" >: NOT_BOL
     | <LPAR: "(">: NOT_BOL
     |<RPAR: ")">: NOT_BOL
 }
+
+// Operators
 <DEFAULT,NOT_BOL> TOKEN: {
-    // Operators
     < PLUS : "+" >: NOT_BOL
     |< MINUS :"-" >: NOT_BOL
     |< MUL: "*" >: NOT_BOL
@@ -68,14 +74,16 @@ PARSER_END(Parser)
     |<NE: "<>">: NOT_BOL
     |<CAT: "&">: NOT_BOL
 }
+
+// Name
 <DEFAULT,NOT_BOL> TOKEN: {
-    // Name
     < NAME: <LETTER>(<LETTER>|<DIGIT>)* >: NOT_BOL
     | < #LETTER: ["a"-"z", "A"-"Z", "_"] >
     | < #DIGIT: ["0"-"9"] >
 }
+
+// Literals
 <DEFAULT,NOT_BOL> TOKEN: {
-    // Literals
     < INT_VALUE: (<DIGIT>)+ >: NOT_BOL
     | < FLOAT_VALUE: <INT_VALUE> "." (<DIGIT>)* | "." (<DIGIT>)+ >: NOT_BOL
     | < STRING_VALUE : "\"" (~["\""])* "\"" | "'" (~["'"])* "'" >: NOT_BOL
@@ -86,11 +94,13 @@ void input(): {} {
     body() (<EOL>)*
     <EOF>
 }
+
 void declaration(): {Type t;}
 {
     (<VAR> varDeclaration() (<COMM> varDeclaration())* <AS> t=type())
     { declareAllVars(t); }
 }
+
 void varDeclaration():
     { Token n; CodeSegment seg = null; Type t = null; }
 {
@@ -103,6 +113,7 @@ void varDeclaration():
         }
     }
 }
+
 Type type(): {Type result;} {
     (
         <INT> { result = Type.INT; }
@@ -112,37 +123,48 @@ Type type(): {Type result;} {
     )
     { return result; }
 }
+
 void body(): {} {
     <START> (<EOL>)+
     (statement() (<EOL>)+)*
     <STOP>
 }
+
 void statement(): {} {
     assignment()
     | ifStatement()
     | whileStatement()
     | output()
 }
+
 void assignment(): {Token n; Type t;} { n=<NAME> <EQUALS> t=expression()
     {storeVar(t,n.image);}
 }
+
 void ifStatement(): {Label l; Type t;} {
     <IF> <LPAR> t=expression() <RPAR> {l=startIf(t);}  (<EOL>)+ body()
     (LOOKAHEAD(2) (<EOL>)+ <ELSE> {l=startElse(l);}  (<EOL>)+ body())? {endIf(l);}
 }
+
 void whileStatement(): {Label ls,le; Type t;} {
     <WHILE> {ls=startWhile();} <LPAR> t=expression() <RPAR>  {le=whileCond(t);}
      (<EOL>)+ body() {endWhile(ls,le);}
 }
-void output(): { Type t; } { <OUTPUT> <COLON> t=expression() {output(t);} }
+
+void output(): { Type t; } {
+    <OUTPUT> <COLON> t=expression() {output(t);}
+}
+
 Type expression(): {Token op; Type t,t2;} {
     ( t=comparison() (LOOKAHEAD(2) op=logicalOp() {startOp2(t);} t2=comparison() { t=endOp2(op.image,t2); })* )
     { return t; }
 }
+
 Token logicalOp(): {Token t;} {
     (t=<AND> | t=<OR>)
     { return t; }
 }
+
 Type comparison(): {Token op; Type t,t2;} {
     (
         t=simpleExpression()
@@ -150,26 +172,32 @@ Type comparison(): {Token op; Type t,t2;} {
     )
     { return t; }
 }
+
 Token comparisonOp(): {Token t;} {
     ( t=<LT> | t=<GT> | t=<LE> | t=<GE> | t=<EQ> | t=<NE> )
     {return t;}
 }
+
 Type simpleExpression(): {Token op; Type t,t2;} {
     ( t=term() (LOOKAHEAD(2) op=addOp() {startOp2(t);} t2=term() { t=endOp2(op.image,t2); })* )
     { return t; }
 }
+
 Token addOp(): {Token t;} {
     ( t=<PLUS> | t=<MINUS> | t=<CAT> )
     { return t; }
 }
+
 Type term(): {Token op; Type t,t2;} {
     ( t=factor() (LOOKAHEAD(2) op=mulOp() {startOp2(t);} t2=factor() { t=endOp2(op.image,t2); } )* )
     { return t; }
 }
+
 Token mulOp(): {Token t;} {
     ( t=<MUL> | t=<DIV> | t=<MOD> )
     { return t; }
 }
+
 Type factor(): {boolean neg = false; Type t; Token n; } {
     (
         (<PLUS>|<MINUS> {neg=!neg;}) t=factor() { if (neg) neg(t); }
@@ -180,8 +208,8 @@ Type factor(): {boolean neg = false; Type t; Token n; } {
     )
     { return t; }
 }
-Type literalValue(): { Token t; Type result; }
-{
+
+Type literalValue(): { Token t; Type result; } {
     (
         t=<INT_VALUE> { literalInt(t.image); result = Type.INT; }
         | t=<FLOAT_VALUE> { literalInt(t.image); result = Type.FLOAT; }
@@ -189,6 +217,7 @@ Type literalValue(): { Token t; Type result; }
     )
     { return result; }
 }
+
 void actualArg(): {Type t;} {
     {startArg();}
     t=expression()
