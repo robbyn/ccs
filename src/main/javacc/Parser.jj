@@ -17,18 +17,15 @@ public class Parser extends Compiler {
 }
 PARSER_END(Parser)
 
-SKIP :
-{
-< " " | "\t" | "\r" | "\n" | "\r\n" >
-| <"//" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
-| <"/*"(~["/"])*  "*""/" >
+SKIP : {
+    < " " | "\t" | "\r" | "\n" | "\r\n" >
+    | <"//" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
+    | <"/*"(~["/"])*  "*""/" >
 }
-TOKEN : { < VAR: "VAR" > }
-TOKEN : { < AS: "AS" >}
 TOKEN : { < START: "START" > | < STOP: "STOP" > | < OUTPUT: "OUTPUT" > } 
-TOKEN : /* KEYWORDS */
-{
-    <INT: "INT"> | <BOOL:"BOOL"> | <FLOAT:"FLOAT"> | <CHAR:"CHAR">
+TOKEN : { /* KEYWORDS */
+    < VAR: "VAR" > | < AS: "AS" >}
+    | <INT: "INT"> | <BOOL:"BOOL"> | <FLOAT:"FLOAT"> | <CHAR:"CHAR">
     | <IF: "IF"> | <ELSE: "ELSE"> | <WHILE: "WHILE">
     | <AND: "AND"> | <OR: "OR"> | <NOT: "NOT">
 }
