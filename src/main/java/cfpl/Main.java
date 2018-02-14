@@ -13,7 +13,7 @@ public class Main {
     public static void main(String[] args) {
         File file = new File(args[0]);
         try (InputStream in = new FileInputStream(file)) {
-            Parser parser = new Parser(in);
+            Parser parser = new Parser(in, "UTF-8");
             parser.parse();
             parser.writeTo(changeExtension(file, ".ccs", ".class"));
         } catch (IOException | ParseException ex) {
