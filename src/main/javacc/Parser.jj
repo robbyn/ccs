@@ -17,43 +17,68 @@ public class Parser extends Compiler {
 }
 PARSER_END(Parser)
 
-SKIP : {
+<DEFAULT,NOT_BOL> SKIP : {
     < " " | "\t" >
-    | <"//" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
-    | <"/*"(~["/"])*  "*""/" >
 }
-TOKEN : {
-    < EOL: "\r" | "\n" | "\r\n" >
+<DEFAULT> SKIP: {
+    < "*" (~["\r", "\n"])* ("\r" | "\n" | "\r\n") >
 }
-TOKEN : { /* KEYWORDS */
-    < VAR: "VAR" > | < AS: "AS" >
-    | <INT: "INT"> | <BOOL:"BOOL"> | <FLOAT:"FLOAT"> | <CHAR:"CHAR">
-    | < START: "START" > | < STOP: "STOP" > | < OUTPUT: "OUTPUT" >
-    | <IF: "IF"> | <ELSE: "ELSE"> | <WHILE: "WHILE">
-    | <AND: "AND"> | <OR: "OR"> | <NOT: "NOT">
+<NOT_BOL> TOKEN : {
+    < EOL: "\r" | "\n" | "\r\n" >: DEFAULT
+}
+<DEFAULT,NOT_BOL> TOKEN : {
+    // Keywords
+    < VAR: "VAR" >: NOT_BOL
+    | < AS: "AS" >: NOT_BOL
+    | <INT: "INT">: NOT_BOL
+    | <BOOL:"BOOL">: NOT_BOL
+    | <FLOAT:"FLOAT">: NOT_BOL
+    | <CHAR:"CHAR">: NOT_BOL
+    | < START: "START" >: NOT_BOL
+    | < STOP: "STOP" >: NOT_BOL
+    | < OUTPUT: "OUTPUT" >: NOT_BOL
+    | <IF: "IF">: NOT_BOL
+    | <ELSE: "ELSE">: NOT_BOL
+    | <WHILE: "WHILE">: NOT_BOL
+    | <AND: "AND">: NOT_BOL
+    | <OR: "OR">: NOT_BOL
+    | <NOT: "NOT">: NOT_BOL
 }
 
-TOKEN :
-{
-  < EQUALS: "=" > | < COLON: ":" > | <LPAR: "(">|<RPAR: ")">
+<DEFAULT,NOT_BOL> TOKEN : {
+    // Specials
+    < EQUALS: "=" >: NOT_BOL
+    | < COLON: ":" >: NOT_BOL
+    | <LPAR: "(">: NOT_BOL
+    |<RPAR: ")">: NOT_BOL
 }
-TOKEN:
-{
-  < PLUS : "+" >|< MINUS :"-" >|< MUL: "*" >|< DIV: "/" >|< MOD: "%" >|< COMM: ",">
-  |<LT: "<">|<GT: ">">|<LE: "<=">|<GE: ">=">|<EQ: "==">|<NE: "<>">
-  |<CAT: "&">
+<DEFAULT,NOT_BOL> TOKEN: {
+    // Operators
+    < PLUS : "+" >: NOT_BOL
+    |< MINUS :"-" >: NOT_BOL
+    |< MUL: "*" >: NOT_BOL
+    |< DIV: "/" >: NOT_BOL
+    |< MOD: "%" >: NOT_BOL
+    |< COMM: ",">: NOT_BOL
+    |<LT: "<">: NOT_BOL
+    |<GT: ">">: NOT_BOL
+    |<LE: "<=">: NOT_BOL
+    |<GE: ">=">: NOT_BOL
+    |<EQ: "==">: NOT_BOL
+    |<NE: "<>">: NOT_BOL
+    |<CAT: "&">: NOT_BOL
 }
-TOKEN:
-{
-    < NAME: <LETTER>(<LETTER>|<DIGIT>)* >
+<DEFAULT,NOT_BOL> TOKEN: {
+    // Name
+    < NAME: <LETTER>(<LETTER>|<DIGIT>)* >: NOT_BOL
     | < #LETTER: ["a"-"z", "A"-"Z", "_"] >
     | < #DIGIT: ["0"-"9"] >
 }
-TOKEN:
-{
-    < INT_VALUE: (<DIGIT>)+ >
-    | < FLOAT_VALUE: <INT_VALUE> "." (<DIGIT>)* | "." (<DIGIT>)+ >
-    | < STRING_VALUE : "\"" (~["\""])* "\"" | "'" (~["'"])* "'" >
+<DEFAULT,NOT_BOL> TOKEN: {
+    // Literals
+    < INT_VALUE: (<DIGIT>)+ >: NOT_BOL
+    | < FLOAT_VALUE: <INT_VALUE> "." (<DIGIT>)* | "." (<DIGIT>)+ >: NOT_BOL
+    | < STRING_VALUE : "\"" (~["\""])* "\"" | "'" (~["'"])* "'" >: NOT_BOL
 }
 
 void input(): {} {
