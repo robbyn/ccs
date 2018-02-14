@@ -24,11 +24,11 @@ PARSER_END(Parser)
 
 // Comments
 <DEFAULT> SKIP: {
-    < "*" (~["\r", "\n"])* ("\r" | "\n" | "\r\n") >
+    < "*" (~["\r", "\n"])* ("\r\n" | "\r" | "\n" ) >
 }
 
 <NOT_BOL> TOKEN : {
-    < EOL: "\r" | "\n" | "\r\n" >: DEFAULT
+    < EOL: "\r\n" | "\r" | "\n"  >: DEFAULT
 }
 
 // Keywords
@@ -126,7 +126,7 @@ Type type(): {Type result;} {
 
 void body(): {} {
     <START> (<EOL>)+
-    (statement() (<EOL>)+)*
+    (statement())*
     <STOP>
 }
 
@@ -137,22 +137,22 @@ void statement(): {} {
     | output()
 }
 
-void assignment(): {Token n; Type t;} { n=<NAME> <EQUALS> t=expression()
+void assignment(): {Token n; Type t;} { n=<NAME> <EQUALS> t=expression() (<EOL>)+
     {storeVar(t,n.image);}
 }
 
 void ifStatement(): {Label l; Type t;} {
-    <IF> <LPAR> t=expression() <RPAR> {l=startIf(t);}  (<EOL>)+ body()
-    (LOOKAHEAD(2)(<EOL>)+ <ELSE> {l=startElse(l);}  (<EOL>)+ body())? {endIf(l);}
+    <IF> <LPAR> t=expression() <RPAR> {l=startIf(t);}  (<EOL>)+ body() (<EOL>)+
+    (LOOKAHEAD(<ELSE>) <ELSE> {l=startElse(l);}  (<EOL>)+ body() (<EOL>)+)? {endIf(l);}
 }
 
 void whileStatement(): {Label ls,le; Type t;} {
     <WHILE> {ls=startWhile();} <LPAR> t=expression() <RPAR>  {le=whileCond(t);}
-     (<EOL>)+ body() {endWhile(ls,le);}
+     (<EOL>)+ body() (<EOL>)+ {endWhile(ls,le);}
 }
 
 void output(): { Type t; } {
-    <OUTPUT> <COLON> t=expression() {output(t);}
+    <OUTPUT> <COLON> t=expression() {output(t);} (<EOL>)+
 }
 
 Type expression(): {Token op; Type t,t2;} {
