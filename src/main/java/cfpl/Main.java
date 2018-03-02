@@ -11,11 +11,15 @@ import java.io.File;
 
 public class Main {
     public static void main(String[] args) {
-        File file = new File(args[0]);
-        try (InputStream in = new FileInputStream(file)) {
-            Parser parser = new Parser(in, "UTF-8");
-            parser.parse();
-            parser.writeTo(changeExtension(file, ".cfpl", ".class"));
+        try {
+            for (String arg: args) {
+                File file = new File(arg);
+                try (InputStream in = new FileInputStream(file)) {
+                    Parser parser = new Parser(in, "UTF-8");
+                    parser.parse();
+                    parser.writeTo(changeExtension(file, ".cfpl", ".class"));
+                }
+            }
         } catch (IOException | ParseException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
