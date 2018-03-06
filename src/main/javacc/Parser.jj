@@ -10,8 +10,43 @@ import cfpl.compiler.Type;
 import cfpl.compiler.Strings;
 import org.tastefuljava.classfile.Label;
 import org.tastefuljava.classfile.CodeSegment;
+import java.io.File;
+import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Parser extends Compiler {
+    public static void main(String[] args) {
+        try {
+            for (String arg: args) {
+                File file = new File(arg);
+                InputStream in = new FileInputStream(file);
+                try {
+                    Parser parser = new Parser(in, "UTF-8");
+                    parser.parse();
+                    parser.writeTo(changeExtension(file, ".cfpl", ".class"));
+                } finally {
+                    in.close();
+                }
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Parser.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
+            Logger.getLogger(Parser.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private static File changeExtension(File file, String from, String to) {
+        File dir = file.getParentFile();
+        String name = file.getName();
+        if (name.endsWith(from)) {
+            name = name.substring(0, name.length()-from.length());
+        }
+        return new File(dir, name + to);
+    }
+
     public void parse() throws ParseException {
         input();
     }
